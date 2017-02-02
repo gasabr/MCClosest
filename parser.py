@@ -15,8 +15,8 @@ SCHEDULE_URL_APPENDIX = "type=suburban&span=schedule"
 
 
 def scrap_stations_names():
+    ''' Returns list of the MCC stations from STATION_LIST_URL. '''
     # TODO: what is the right name for the function?
-    # TODO: docstring for station_names()
     r = requests.get(STATION_LIST_URL)
     soup = BeautifulSoup(r.text, "html.parser")
 
@@ -34,7 +34,10 @@ def scrap_stations_names():
 
 
 def get_coordinates(places):
-    # TODO: docstring for get_coordinates()
+    ''' Returns coordinates of given places.
+
+        For this program it's metro stations, so we look for special meta info
+    '''
     places_info = []
     for p in places:
         request_place = 'Москва мцк ' + p # to make request more accurate
@@ -44,8 +47,12 @@ def get_coordinates(places):
         for o in objects:
             object_meta = o['GeoObject']['metaDataProperty']
             if object_meta['GeocoderMetaData']['kind'] == 'metro':
+                # if we found metro extract coordinates from the response
                 lon, lat = map(float, o['GeoObject']['Point']['pos'].split(' '))
+
+                # add station to the result list
                 places_info.append(Station(p, lon, lat))
+
                 # as soon as we found metro -- break loop
                 break
 

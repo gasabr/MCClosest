@@ -6,6 +6,7 @@ from config import Station
 
 EARTH_RADIUS = 6373.0
 
+# TODO: migrate to SQLAlchemy
 
 def geo_dist(point1, point2) -> float:
     '''takes 2 tuples, returns haversine distance.'''
@@ -31,9 +32,13 @@ class DBManager:
         self.connection = sqlite3.connect(self._db_name)
         self.cursor = self.connection.cursor()
 
+    def __del__(self, **kwargs):
+        self.cursor.close()
+        self.connection.commit()
+        self.connection.close()
 
     def create_tables(self, scheme):
-        '''scheme is a dict'''
+        '''Creates tables from the dictionary scheme.'''
         request = '''CREATE TABLE IF NOT EXISTS '''
 
         for table_name, columns in scheme.items():
@@ -44,13 +49,14 @@ class DBManager:
 
         self.cursor.execute(request)
 
-
     def insert_into(self, table, data):
-        '''
-        takes table name and array of tuples 
-        (one tuple) = one row
-        record values from tuples to rows
-        NOTE: len(tuple) MUST be equal to the number of columns in the table
+        ''' Insert tuple representing row in the table.
+
+            takes table name and array of tuples 
+            (one tuple) = one row
+            records values from tuples to rows
+            NOTE: len(tuple) MUST be equal to the number 
+                  of columns in the table
         '''
         query_base = 'INSERT INTO %s ' % table
         for row in data:
@@ -66,9 +72,12 @@ class DBManager:
 
         return None
 
-
     def find_closest(self, lon, lat):
-        '''returns (StationName, lon, lat)'''
+        ''' Finds the closest station to given coordinates.
+
+            returns (StationName, lon, lat)
+        '''
+
         min_dist = 1000000
         closest_station = None
 
