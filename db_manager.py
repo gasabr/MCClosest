@@ -1,7 +1,7 @@
 import sqlite3
 from math import sin, cos, sqrt, atan2, radians
 
-from config import Station
+from config import Place
 
 
 EARTH_RADIUS = 6373.0
@@ -75,7 +75,7 @@ class DBManager:
     def find_closest(self, lon, lat):
         ''' Finds the closest station to given coordinates.
 
-            returns (StationName, lon, lat)
+            returns (PlaceName, lon, lat)
         '''
 
         min_dist = 1000000
@@ -90,7 +90,7 @@ class DBManager:
                 min_dist = dist
                 closest_station = station
 
-        return Station(closest_station[0], # name
+        return Place(closest_station[0], # name
                        closest_station[1], # longtitude
                        closest_station[2]  # latitude
                        )
