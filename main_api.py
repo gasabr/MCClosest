@@ -7,7 +7,7 @@ import time
 from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove)
 from telegram.ext import (Updater, CommandHandler, MessageHandler,
                           Filters, RegexHandler, ConversationHandler
-                          )
+                         )
 
 import config
 from parser import get_coordinates, scrap_stations_names
@@ -18,7 +18,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 logger = logging.getLogger(__name__)
 
-# TODO: write a request API
+# TODO: write a request API function
 
 
 def get_schedule(code):
@@ -26,8 +26,7 @@ def get_schedule(code):
     schedule = []
     for page in schedule_pages(code):
         # TODO: would be nice to get rid of this string
-        for p in page:
-            schedule.append(p)
+        schedule.extend(page)
 
     return schedule
 
@@ -60,14 +59,17 @@ def schedule_pages(code):
 
 def parse_schedule(schedule):
     ''' Returns closest trains from given schedule. '''
+    iter_schedule = iter(schedule)
     now = datetime.now()
     
     # find the first train after now
-    # for s in schedule[:10]:
-    #     dep_time = datetime.strftime(s['departure_time'])
-    #     print(dep_time)
+    for s in iter_schedule:
+        dep_time = datetime.strptime(s['departure'], '%Y-%m-%d %H:%M:%S')
+        if dep_time > now:
+            next_train = next(iter_schedule)
+            return (s, next_train)
 
-    return []
+    return ()
 
 
 def text(bot, update):
@@ -97,10 +99,16 @@ def find_nearest(place):
 #       function is redudant since i can add find_nearest as handler,
 #       but i can't
 #       other way is to call location() from text(), 
-#       but that doesn't semm possible
-# TODO: read why does this thing mute all the errors?
+#       but that doesn't seems to be possible
+# TODO: read why does this thing (telegram framework) mute all the errors?
 def location(bot, update):
-    ''' Will call normal function instead of bot method. '''
+    ''' Handle case there user sends location. 
+
+        Finds the closest station by coordinates in update and
+        nearest trains on this station in both directions.
+        Sends back this information.
+    '''
+
     user = update.message.from_user
     user_location = update.message.location
 
@@ -119,18 +127,20 @@ def location(bot, update):
         # check if it's MCC station
         # scrap stations every time is not the best solution
         if station['title'] in scrap_stations_names():
-            print('oopps')
             schedule = get_schedule(station['code'])
-            print(len(schedule))
             nearest  = parse_schedule(schedule)
 
-            print('SСHEDULE for :')
-            # print(json.dumps(schedule, indent=2, ensure_ascii=False), '\n\n')
-            # print(json.dumps(nearest, indent=2, ensure_ascii=False))
+            print(json.dumps(nearest, indent=2, ensure_ascii=False))
 
-            update.message.reply_text('Ближайшая станция к вам - '
-                                      '{}'.format(station['title'])
-                                      )
+            update.message.reply_text(
+                config.reply_pattern.format(
+                    station_name=station['title'],
+                    direction1=nearest[0]['thread']['short_title'],
+                    time1=nearest[0]['departure'][-8:],
+                    direction2=nearest[1]['thread']['short_title'],
+                    time2=nearest[1]['departure'][-8:],
+                )
+            )
 
             break
 

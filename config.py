@@ -19,3 +19,9 @@ DB_SCHEME = {
 }
 
 Place = namedtuple('Place', ['name', 'lon', 'lat'])
+
+reply_pattern = ('Ближайшие поезда на станции {station_name}:\n' 
+				 'Направление                    | Время\n'
+				 '{direction1:22} | {time1}\n'
+				 '{direction2:22} | {time2}\n'
+				 )
