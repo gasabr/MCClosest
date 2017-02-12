@@ -28,8 +28,6 @@ def scrap_stations_names():
         except AttributeError as e:
             pass
 
-    print("%d stations were parsed" % len(stations))
-
     return stations
 
 
@@ -42,7 +40,7 @@ def get_coordinates(places, meta=''):
     print(places_info)
     for p in places:
         # to make request more accurate craete more verbose request
-        request_place = 'Москва ' + meta + ' ' + p 
+        request_place = 'Москва ' + meta + ' ' + p
         r = requests.get(YA_MAPS_URL + request_place)
         objects = r.json()['response']['GeoObjectCollection']['featureMember']
 
@@ -78,7 +76,7 @@ def main():
     print('''{} couples (lon, lat) were received '
           'from Yandex Maps'''.format(len(stations))
           )
-    
+
     if len(stations) == len(stations_list) == 31:
         print('\nAll stations were successfully scraped/parsed.')
 

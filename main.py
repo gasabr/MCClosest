@@ -13,8 +13,6 @@ from telegram.ext import (Updater, CommandHandler, MessageHandler,
 import config
 from parser import get_coordinates, scrap_stations_names
 
-PORT = int(os.environ.get('PORT', '5000'))
-
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -22,7 +20,6 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 # TODO: write a request API function
-
 
 def get_schedule(code):
     ''' Returns this day schedule for the station encoded by code attribute. '''
@@ -155,11 +152,13 @@ def error(bot, update, error):
 def main():
     updater = Updater(config.TELEGRAM_TOKEN)
 
-    updater.start_webhook(listen='0.0.0.0',
-                      port=PORT,
-                      url_path=config.TOKEN
-                      )
-    updater.setWebhook("https://<appname>.herokuapp.com/" + config.TELEGRAM_TOKEN)
+    updater.start_webhook(listen=config.WEBHOOK_IP,
+                          port=config.WEBHOOK_PORT,
+                          url_path=config.TELEGRAM_TOKEN,
+                          key=config.WEBHOOK_SSL_PRIV,
+                          cert=config.WEBHOOK_SSL_CERT,
+                          webhook_url=config.WEBHOOK_URL
+                    )
 
     dp = updater.dispatcher
 
@@ -167,8 +166,6 @@ def main():
     dp.add_handler(MessageHandler(Filters.location, location))
 
     dp.add_error_handler(error)
-
-    # updater.start_polling()
 
     updater.idle()
 
