@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
+import os
 import requests
 import logging
-import json     # debugging 
+import json     # debugging
 from datetime import datetime, timedelta, date
 import time
 from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove)
@@ -11,6 +12,8 @@ from telegram.ext import (Updater, CommandHandler, MessageHandler,
 
 import config
 from parser import get_coordinates, scrap_stations_names
+
+PORT = int(os.environ.get('PORT', '5000'))
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -61,7 +64,7 @@ def parse_schedule(schedule):
     ''' Returns closest trains from given schedule. '''
     iter_schedule = iter(schedule)
     now = datetime.now()
-    
+
     # find the first train after now
     for s in iter_schedule:
         dep_time = datetime.strptime(s['departure'], '%Y-%m-%d %H:%M:%S')
@@ -98,11 +101,11 @@ def find_nearest(place):
 # TODO: solve following pronlem
 #       function is redudant since i can add find_nearest as handler,
 #       but i can't
-#       other way is to call location() from text(), 
+#       other way is to call location() from text(),
 #       but that doesn't seems to be possible
 # TODO: read why does this thing (telegram framework) mute all the errors?
 def location(bot, update):
-    ''' Handle case there user sends location. 
+    ''' Handle case there user sends location.
 
         Finds the closest station by coordinates in update and
         nearest trains on this station in both directions.
@@ -152,6 +155,12 @@ def error(bot, update, error):
 def main():
     updater = Updater(config.TELEGRAM_TOKEN)
 
+    updater.start_webhook(listen='0.0.0.0',
+                      port=PORT,
+                      url_path=config.TOKEN
+                      )
+    updater.setWebhook("https://<appname>.herokuapp.com/" + config.TELEGRAM_TOKEN)
+
     dp = updater.dispatcher
 
     dp.add_handler(MessageHandler(Filters.text, text))
@@ -159,7 +168,7 @@ def main():
 
     dp.add_error_handler(error)
 
-    updater.start_polling()
+    # updater.start_polling()
 
     updater.idle()
 
