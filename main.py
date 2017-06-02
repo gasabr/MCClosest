@@ -74,11 +74,15 @@ def parse_schedule(schedule):
 
 def text(bot, update):
     ''' Finds closest station from geo object represented by string. '''
-    list_of_places = get_coordinates([bot.message.text])
+    update.message.reply_text('Единственное, что я умею - '
+        'это отправлять вам расписания относительно местоположения.')
 
-    nearest_station = find_nearest(list_of_places[0])
 
-    # TODO: call location() with coordinates of nearest station
+def send_help(bot, update):
+    update.message.reply_text('Как пользоваться:\n'
+        'Отправить боту местоположение - в ответ придет расписание.\n'
+        'Данные от Яндекс.Расписания.\n'
+        'Любые вопросы/предложения @gasabr.\n')
 
 
 def find_nearest(place):
@@ -116,7 +120,7 @@ def location(bot, update):
                      'apikey'  : config.YA_API_KEY,
                      'lat'     : user_location['latitude'],
                      'lng'     : user_location['longitude'],
-                     'distance': 3,
+                     'distance': 5,
                      'format'  : 'json',
                      'transport_types': 'train',
                      'station_type'   : 'станция',
@@ -152,7 +156,7 @@ def error(bot, update, error):
 def main():
     updater = Updater(config.TELEGRAM_TOKEN)
 
-    updater.start_webhook(listen=config.WEBHOOK_IP,
+    updater.start_webhook(listen=config.WEBHOOK_HOST,
                           port=config.WEBHOOK_PORT,
                           url_path=config.TELEGRAM_TOKEN,
                           key=config.WEBHOOK_SSL_PRIV,
@@ -164,6 +168,8 @@ def main():
 
     dp.add_handler(MessageHandler(Filters.text, text))
     dp.add_handler(MessageHandler(Filters.location, location))
+    dp.add_handler(CommandHandler('/start', send_help))
+    dp.add_handler(CommandHandler('/help', send_help))
 
     dp.add_error_handler(error)
 
